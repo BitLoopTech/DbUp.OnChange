@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using DbUp.Engine;
 using DbUp.Engine.Output;
 using DbUp.Engine.Transactions;
@@ -42,7 +43,12 @@ namespace DbUp.SqlServer
 
         protected override string GetJournalEntriesSql()
         {
-            if (RedeployableScriptSupportIsEnabled())
+            throw new NotImplementedException();
+        }
+
+        protected override string GetJournalEntriesSql(Func<IDbCommand> dbCommandFactory)
+        {
+            if (RedeployableScriptSupportIsEnabled(dbCommandFactory))
             {
                 // if redeployable script support is enabled, use Hash column value;
                 // because redeployable script can appear multiple times with different Hash value, retrieve the most recent redeploy record
