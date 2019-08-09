@@ -135,6 +135,11 @@ namespace DbUp.Engine
                 {
                     providerScripts = configuration.ScriptDependencyOrderer.GetScriptsOrderedByDependencies(providerScripts, dependencyOrderFilePath);
                 }
+                else
+                {
+                    // order scripts based on name
+                    providerScripts = providerScripts.OrderBy(s => s.Name, configuration.ScriptNameComparer).ToList();
+                }
 
                 // if redeploy on change is activated, mark all script for redeploy
                 if (scriptProvider.ScriptOptions.RedeployOnChange || scriptProvider.ScriptOptions.FirstDeploymentAsStartingPoint)
@@ -149,8 +154,18 @@ namespace DbUp.Engine
             });
 
             var executedScripts = configuration.Journal.GetExecutedScripts();
+            IOrderedEnumerable<SqlScript> sorted;
 
-            var sorted = allScripts.OrderBy(s => s.Name, configuration.ScriptNameComparer);
+            // if there is at least a provider with a custom dependency order, do not sort scripts as they are already sorted by dependencies
+            if (configuration.ScriptProviders.Any(e => !string.IsNullOrEmpty(e.ScriptOptions.DependencyOrderFilePath)))
+            {
+                sorted = allScripts.OrderBy(s => 1);
+            }
+            else
+            {
+                sorted = allScripts.OrderBy(s => s.Name, configuration.ScriptNameComparer);
+            }
+
             var filtered = configuration.ScriptFilter.Filter(sorted, executedScripts, configuration.ScriptNameComparer, configuration.Hasher);
 
             return filtered.ToList();
