@@ -177,7 +177,7 @@ namespace DbUp.Support
         protected IDbCommand GetJournalEntriesCommand(Func<IDbCommand> dbCommandFactory)
         {
             var command = dbCommandFactory();
-            command.CommandText = GetJournalEntriesSql();
+            command.CommandText = GetJournalEntriesSql(dbCommandFactory) ?? GetJournalEntriesSql();
             command.CommandType = CommandType.Text;
             return command;
         }
@@ -214,6 +214,11 @@ namespace DbUp.Support
         /// Sql for getting the journal entries
         /// </summary>
         protected abstract string GetJournalEntriesSql();
+
+        protected virtual string GetJournalEntriesSql(Func<IDbCommand> dbCommandFactory)
+        {
+            return null;
+        }
 
         /// <summary>
         /// Sql for creating journal table
@@ -304,6 +309,22 @@ namespace DbUp.Support
                     return false;
                 }
             });
+        }
+
+        /// <summary>
+        /// Returns whether redeployable script support is enabled before starting applying changes
+        /// </summary>
+        public bool RedeployableScriptSupportIsEnabled(Func<IDbCommand> dbCommandFactory)
+        {
+            try
+            {
+                IDbCommand dbCommand = dbCommandFactory();
+                return VerifyColumnExistsCommand(dbCommand, UnquotedSchemaTableName, "Hash", SchemaTableSchema);
+            }
+            catch (DbException)
+            {
+                return false;
+            }
         }
 
         /// <summary>Verify, using database-specific queries, if the table exists in the database.</summary>
